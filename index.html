@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESL Vocab Selector · Gemini</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f5f0;
+  --surface: #ffffff;
+  --border: #e2ddd6;
+  --text: #1a1a1a;
+  --muted: #999;
+  --accent: #c8452a;
+  --accent-hover: #b03a22;
+  --easy-color: #2d7a3a;
+  --easy-bg: #edf7ef;
+  --easy-border: #a3d4ab;
+  --medium-color: #7a5a0a;
+  --medium-bg: #fdf6e3;
+  --medium-border: #f0cc6a;
+  --hard-color: #7a1a2e;
+  --hard-bg: #fdf0f3;
+  --hard-border: #f0a3b5;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+
+.page { display: none; width: 100%; }
+.page.active { display: block; animation: fadeUp .35s ease; }
+
+/* ── SETUP PAGE ── */
+#page-setup { max-width: 500px; margin: 0 auto; }
+
+.setup-logo { text-align: center; margin-bottom: 40px; }
+.setup-logo h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-weight: 900;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.setup-logo h1 em { color: var(--accent); font-style: normal; }
+.setup-logo p {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+.api-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 36px;
+}
+.field-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+  display: block;
+}
+.api-card input[type="password"],
+.api-card input[type="text"] {
+  width: 100%;
+  padding: 13px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s;
+  margin-bottom: 10px;
+}
+.api-card input:focus { border-color: var(--accent); }
+.show-key-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 20px;
+}
+.show-key-row label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 1px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.show-key-row input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); }
+
+.api-note {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.65;
+  margin-bottom: 24px;
+}
+.api-note a { color: var(--accent); text-decoration: none; }
+.api-note a:hover { text-decoration: underline; }
+
+.btn-primary {
+  width: 100%;
+  padding: 16px;
+  background: var(--accent);
+  border: none;
+  border-radius: 9px;
+  color: #fff;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s;
+}
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+
+/* ── INDEX PAGE ── */
+#page-index { max-width: 760px; margin: 0 auto; }
+
+.logo { text-align: center; margin-bottom: 44px; }
+.logo h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.9rem, 5vw, 3rem);
+  font-weight: 900;
+  letter-spacing: -1px;
+  color: var(--text);
+  line-height: 1;
+}
+.logo h1 em { color: var(--accent); font-style: normal; }
+.logo p {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.section-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.letter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+  gap: 5px;
+  margin-bottom: 28px;
+}
+.letter-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  height: 42px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all .12s;
+  display: flex; align-items: center; justify-content: center;
+}
+.letter-btn:hover { border-color: var(--accent); color: var(--accent); }
+.letter-btn.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.diff-row { display: flex; gap: 8px; margin-bottom: 28px; flex-wrap: wrap; }
+.diff-btn {
+  flex: 1; min-width: 130px;
+  padding: 13px 18px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .12s;
+  display: flex; align-items: center; gap: 10px;
+}
+.diff-btn .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.diff-btn[data-level="easy"] .dot   { background: var(--easy-color); }
+.diff-btn[data-level="medium"] .dot { background: var(--medium-color); }
+.diff-btn[data-level="hard"] .dot   { background: var(--hard-color); }
+.diff-btn:hover { border-color: #ccc; color: var(--text); }
+.diff-btn.selected[data-level="easy"]   { border-color: var(--easy-border);   color: var(--easy-color);   background: var(--easy-bg); }
+.diff-btn.selected[data-level="medium"] { border-color: var(--medium-border); color: var(--medium-color); background: var(--medium-bg); }
+.diff-btn.selected[data-level="hard"]   { border-color: var(--hard-border);   color: var(--hard-color);   background: var(--hard-bg); }
+
+.go-btn {
+  width: 100%;
+  padding: 17px;
+  background: var(--accent);
+  border: none;
+  border-radius: 9px;
+  color: #fff;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s;
+}
+.go-btn:hover:not(:disabled) { background: var(--accent-hover); }
+.go-btn:disabled { background: #d9d4ce; color: #aaa; cursor: not-allowed; }
+
+.index-footer { display: flex; justify-content: center; margin-top: 20px; }
+.text-link {
+  background: none; border: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.text-link:hover { color: var(--text); }
+
+/* ── WORD PAGE ── */
+#page-word { max-width: 640px; margin: 0 auto; }
+
+.top-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.back-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .12s;
+}
+.back-btn:hover { border-color: #bbb; color: var(--text); }
+
+.ctx-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ctx-label strong { color: var(--text); }
+
+.word-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 64px 48px;
+  text-align: center;
+  min-height: 340px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+  position: relative;
+  user-select: none;
+  transition: border-color .15s;
+}
+.word-card.clickable { cursor: pointer; }
+.word-card.clickable:hover { border-color: #ccc; }
+
+.level-pill {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid;
+}
+.level-pill.easy   { color: var(--easy-color);   border-color: var(--easy-border);   background: var(--easy-bg); }
+.level-pill.medium { color: var(--medium-color); border-color: var(--medium-border); background: var(--medium-bg); }
+.level-pill.hard   { color: var(--hard-color);   border-color: var(--hard-border);   background: var(--hard-bg); }
+
+.spinner {
+  width: 36px; height: 36px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+.loading-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.def-text {
+  font-size: clamp(1rem, 2.4vw, 1.2rem);
+  line-height: 1.75;
+  color: var(--text);
+  max-width: 500px;
+}
+.word-reveal {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.5rem, 8vw, 4.8rem);
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: -2px;
+  line-height: 1;
+  animation: pop .35s cubic-bezier(.34,1.56,.64,1);
+}
+.tap-hint {
+  position: absolute;
+  bottom: 18px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #bbb;
+}
+
+.error-icon { font-size: 1.8rem; }
+.error-msg {
+  font-size: 0.9rem;
+  color: #c0392b;
+  max-width: 400px;
+  line-height: 1.6;
+}
+.retry-btn {
+  padding: 10px 24px;
+  background: var(--accent);
+  border: none;
+  border-radius: 7px;
+  color: #fff;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .15s;
+}
+.retry-btn:hover { background: var(--accent-hover); }
+
+/* History chips */
+.history-row {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 16px; justify-content: center;
+}
+.history-chip {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 8px;
+  color: var(--muted);
+}
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes pop { from { opacity:0; transform:scale(.65); } to { opacity:1; transform:scale(1); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="page-setup" class="page active">
+  <div class="setup-logo">
+    <h1>ESL Vocab <em>Selector</em></h1>
+    <p>Powered by Gemini AI · Teacher tool</p>
+  </div>
+  <div class="api-card">
+    <label class="field-label" for="api-key-input">Gemini API Key</label>
+    <input type="password" id="api-key-input" placeholder="AIza…" autocomplete="off" spellcheck="false">
+    <div class="show-key-row">
+      <input type="checkbox" id="show-key">
+      <label for="show-key">Show key</label>
+    </div>
+    <p class="api-note">
+      Your key stays in your browser's local storage and is sent only to Google's servers — never anywhere else.<br><br>
+      Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a>.
+    </p>
+    <button class="btn-primary" id="save-key-btn" disabled>Start →</button>
+  </div>
+</div>
+
+<!-- INDEX -->
+<div id="page-index" class="page">
+  <div class="logo">
+    <h1>ESL Vocab <em>Selector</em></h1>
+    <p>Gemini AI · new word every time</p>
+  </div>
+  <div class="section-label">Starting Letter</div>
+  <div class="letter-grid" id="letter-grid"></div>
+  <div class="section-label">Difficulty Level</div>
+  <div class="diff-row">
+    <button class="diff-btn" data-level="easy"><span class="dot"></span>Easy</button>
+    <button class="diff-btn" data-level="medium"><span class="dot"></span>Medium</button>
+    <button class="diff-btn" data-level="hard"><span class="dot"></span>Difficult</button>
+  </div>
+  <button class="go-btn" id="go-btn" disabled>Select a letter and level</button>
+  <div class="index-footer">
+    <button class="text-link" id="change-key-btn">Change API key</button>
+  </div>
+</div>
+
+<!-- WORD -->
+<div id="page-word" class="page">
+  <div class="top-bar">
+    <button class="back-btn" id="back-btn">← Back</button>
+    <div class="ctx-label">Letter <strong id="ctx-letter">A</strong> · <strong id="ctx-level">Easy</strong></div>
+  </div>
+  <div class="word-card" id="word-card"></div>
+  <div class="history-row" id="history-row"></div>
+</div>
+
+<script type="module">
+import { GoogleGenAI } from 'https://esm.run/@google/genai';
+
+// ── STATE ──────────────────────────────
+let ai = null;
+let selectedLetter = null;
+let selectedLevel  = null;
+let cardState      = 'loading'; // loading | def | word | error
+let currentWord    = null;
+let currentDef     = null;
+let errorMsg       = '';
+let sessionHistory = {};
+
+const levelDescriptions = {
+  easy:   'A1-A2 level (very common, concrete, everyday English words)',
+  medium: 'B1 level (intermediate words, moderately common)',
+  hard:   'B1-B2 level (upper-intermediate, more abstract or academic words)'
+};
+const levelLabels = { easy: 'Easy', medium: 'Medium', hard: 'Difficult' };
+
+// ── PAGE ROUTING ───────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── SETUP PAGE ─────────────────────────
+const apiKeyInput = document.getElementById('api-key-input');
+const saveKeyBtn  = document.getElementById('save-key-btn');
+const showKeyChk  = document.getElementById('show-key');
+
+const savedKey = localStorage.getItem('gemini_esl_key') || '';
+if (savedKey) {
+  apiKeyInput.value = savedKey;
+  saveKeyBtn.disabled = false;
+  initAI(savedKey);
+  showPage('page-index');
+}
+
+apiKeyInput.addEventListener('input', () => {
+  saveKeyBtn.disabled = apiKeyInput.value.trim().length < 10;
+});
+showKeyChk.addEventListener('change', () => {
+  apiKeyInput.type = showKeyChk.checked ? 'text' : 'password';
+});
+saveKeyBtn.addEventListener('click', () => {
+  const key = apiKeyInput.value.trim();
+  localStorage.setItem('gemini_esl_key', key);
+  initAI(key);
+  showPage('page-index');
+});
+document.getElementById('change-key-btn').addEventListener('click', () => {
+  showPage('page-setup');
+});
+
+function initAI(key) {
+  ai = new GoogleGenAI({ apiKey: key });
+}
+
+// ── LETTER GRID ────────────────────────
+const grid = document.getElementById('letter-grid');
+'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter => {
+  const btn = document.createElement('button');
+  btn.className = 'letter-btn';
+  btn.textContent = letter;
+  btn.dataset.letter = letter;
+  btn.addEventListener('click', () => {
+    selectedLetter = letter;
+    document.querySelectorAll('.letter-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    checkReady();
+  });
+  grid.appendChild(btn);
+});
+
+document.querySelectorAll('.diff-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    selectedLevel = btn.dataset.level;
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    checkReady();
+  });
+});
+
+function checkReady() {
+  const goBtn = document.getElementById('go-btn');
+  if (selectedLetter && selectedLevel) {
+    goBtn.disabled = false;
+    goBtn.textContent = 'Generate a new word →';
+  } else {
+    goBtn.disabled = true;
+    goBtn.textContent = 'Select a letter and level';
+  }
+}
+
+// ── GO ─────────────────────────────────
+document.getElementById('go-btn').addEventListener('click', startWordPage);
+
+function startWordPage() {
+  cardState    = 'loading';
+  currentWord  = null;
+  currentDef   = null;
+  errorMsg     = '';
+
+  document.getElementById('ctx-letter').textContent = selectedLetter;
+  document.getElementById('ctx-level').textContent  = levelLabels[selectedLevel];
+
+  renderCard();
+  showPage('page-word');
+  updateHistoryChips();
+  fetchWord();
+}
+
+// ── GEMINI CALL ────────────────────────
+async function fetchWord() {
+  const hKey    = `${selectedLetter}-${selectedLevel}`;
+  const already = sessionHistory[hKey] || [];
+  const exclude = already.length
+    ? `Do NOT reuse any of these words already shown: ${already.join(', ')}.`
+    : '';
+
+  const prompt =
+    `You are an ESL vocabulary teaching assistant for a Quebec secondary school teacher.\n` +
+    `Generate exactly ONE English vocabulary word that:\n` +
+    `- Starts with the letter "${selectedLetter}"\n` +
+    `- Is appropriate for ${levelDescriptions[selectedLevel]}\n` +
+    `- Has a short, clear definition in plain English (one sentence, max 25 words, no jargon)\n` +
+    `${exclude}\n\n` +
+    `Reply ONLY with minified JSON, no markdown, no explanation:\n` +
+    `{"word":"Example","definition":"A clear definition here."}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash',
+      contents: prompt,
+      config: { temperature: 0.9, maxOutputTokens: 120 }
+    });
+
+    const raw     = response.text.trim();
+    const cleaned = raw.replace(/```json|```/g, '').trim();
+    const parsed  = JSON.parse(cleaned);
+
+    if (!parsed.word || !parsed.definition) throw new Error('Unexpected response format from Gemini.');
+    if (!parsed.word.toUpperCase().startsWith(selectedLetter)) {
+      throw new Error(`Gemini returned "${parsed.word}" — wrong starting letter. Tap retry.`);
+    }
+
+    currentWord = parsed.word;
+    currentDef  = parsed.definition;
+    cardState   = 'def';
+
+    if (!sessionHistory[hKey]) sessionHistory[hKey] = [];
+    if (!sessionHistory[hKey].includes(currentWord)) sessionHistory[hKey].push(currentWord);
+
+    updateHistoryChips();
+    renderCard();
+
+  } catch (err) {
+    cardState = 'error';
+    errorMsg  = err.message || 'Unknown error.';
+    renderCard();
+  }
+}
+
+// ── RENDER CARD ────────────────────────
+const card = document.getElementById('word-card');
+
+function renderCard() {
+  card.className = 'word-card';
+
+  if (cardState === 'loading') {
+    card.innerHTML = `
+      <div class="spinner"></div>
+      <div class="loading-label">Generating word…</div>`;
+    return;
+  }
+
+  if (cardState === 'error') {
+    card.innerHTML = `
+      <div class="error-icon">⚠</div>
+      <div class="error-msg">${esc(errorMsg)}</div>
+      <button class="retry-btn" id="retry-btn">Try Again</button>`;
+    document.getElementById('retry-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      cardState = 'loading';
+      renderCard();
+      fetchWord();
+    });
+    return;
+  }
+
+  const pill  = `<div class="level-pill ${selectedLevel}">${levelLabels[selectedLevel]}</div>`;
+  const def   = `<div class="def-text">${esc(currentDef)}</div>`;
+  const word  = cardState === 'word'
+    ? `<div class="word-reveal">${esc(currentWord)}</div>` : '';
+  const hint  = cardState === 'def'
+    ? '<div class="tap-hint">Tap to reveal the word</div>'
+    : '<div class="tap-hint">Tap to go back</div>';
+
+  card.classList.add('clickable');
+  card.innerHTML = pill + def + word + hint;
+}
+
+card.addEventListener('click', () => {
+  if (cardState === 'def')  { cardState = 'word'; renderCard(); }
+  else if (cardState === 'word') { showPage('page-index'); }
+});
+
+// ── BACK ───────────────────────────────
+document.getElementById('back-btn').addEventListener('click', () => showPage('page-index'));
+
+// ── HISTORY ────────────────────────────
+function updateHistoryChips() {
+  const row   = document.getElementById('history-row');
+  const words = sessionHistory[`${selectedLetter}-${selectedLevel}`] || [];
+  row.innerHTML = words.map(w => `<span class="history-chip">${esc(w)}</span>`).join('');
+}
+
+// ── UTIL ───────────────────────────────
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
