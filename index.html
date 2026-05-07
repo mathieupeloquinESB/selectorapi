@@ -362,7 +362,8 @@ body {
 
 .history-row {
   display: flex; flex-wrap: wrap; gap: 6px;
-  margin-top: 16px; justify-content: center;
+  margin-top: 14px; justify-content: center;
+  min-height: 0;
 }
 .history-chip {
   font-family: 'DM Mono', monospace;
@@ -419,6 +420,7 @@ body {
     <button class="diff-btn" data-level="hard"><span class="dot"></span>Difficult</button>
   </div>
   <button class="go-btn" id="go-btn" disabled>Select a letter and level</button>
+  <div class="history-row" id="history-row"></div>
   <div class="index-footer">
     <button class="text-link" id="change-key-btn">Change API key</button>
   </div>
@@ -431,7 +433,6 @@ body {
     <div class="ctx-label">Letter <strong id="ctx-letter">A</strong> · <strong id="ctx-level">Easy</strong></div>
   </div>
   <div class="word-card" id="word-card"></div>
-  <div class="history-row" id="history-row"></div>
 </div>
 
 <script>
@@ -661,11 +662,14 @@ function renderCard() {
 
 card.addEventListener('click', () => {
   if      (cardState === 'def')  { cardState = 'word'; renderCard(); }
-  else if (cardState === 'word') { showPage('page-index'); }
+  else if (cardState === 'word') { updateHistoryChips(); showPage('page-index'); }
 });
 
 // ── BACK ───────────────────────────────
-document.getElementById('back-btn').addEventListener('click', () => showPage('page-index'));
+document.getElementById('back-btn').addEventListener('click', () => {
+  updateHistoryChips();
+  showPage('page-index');
+});
 
 // ── HISTORY ────────────────────────────
 function updateHistoryChips() {
