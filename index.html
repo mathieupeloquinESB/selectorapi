@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ESL Vocab Selector · Gemini</title>
+<title>ESL Vocab Selector · Claude AI</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -41,7 +41,7 @@ body {
 .page { display: none; width: 100%; }
 .page.active { display: block; animation: fadeUp .35s ease; }
 
-/* ── SETUP PAGE ── */
+/* ── SETUP ── */
 #page-setup { max-width: 500px; margin: 0 auto; }
 
 .setup-logo { text-align: center; margin-bottom: 40px; }
@@ -92,6 +92,7 @@ body {
   margin-bottom: 10px;
 }
 .api-card input:focus { border-color: var(--accent); }
+
 .show-key-row {
   display: flex; align-items: center; gap: 8px;
   margin-bottom: 20px;
@@ -130,7 +131,7 @@ body {
 .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
 .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
 
-/* ── INDEX PAGE ── */
+/* ── INDEX ── */
 #page-index { max-width: 760px; margin: 0 auto; }
 
 .logo { text-align: center; margin-bottom: 44px; }
@@ -359,7 +360,6 @@ body {
 }
 .retry-btn:hover { background: var(--accent-hover); }
 
-/* History chips */
 .history-row {
   display: flex; flex-wrap: wrap; gap: 6px;
   margin-top: 16px; justify-content: center;
@@ -377,8 +377,8 @@ body {
 }
 
 @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-@keyframes pop { from { opacity:0; transform:scale(.65); } to { opacity:1; transform:scale(1); } }
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pop    { from { opacity:0; transform:scale(.65); }       to { opacity:1; transform:scale(1); } }
+@keyframes spin   { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -387,18 +387,18 @@ body {
 <div id="page-setup" class="page active">
   <div class="setup-logo">
     <h1>ESL Vocab <em>Selector</em></h1>
-    <p>Powered by Gemini AI · Teacher tool</p>
+    <p>Powered by Claude AI · Teacher tool</p>
   </div>
   <div class="api-card">
-    <label class="field-label" for="api-key-input">Gemini API Key</label>
-    <input type="password" id="api-key-input" placeholder="AIza…" autocomplete="off" spellcheck="false">
+    <label class="field-label" for="api-key-input">Anthropic API Key</label>
+    <input type="password" id="api-key-input" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
     <div class="show-key-row">
       <input type="checkbox" id="show-key">
       <label for="show-key">Show key</label>
     </div>
     <p class="api-note">
-      Your key stays in your browser's local storage and is sent only to Google's servers — never anywhere else.<br><br>
-      Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a>.
+      Your key is stored only in your browser's local storage and is sent directly to Anthropic's servers — never anywhere else.<br><br>
+      Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a>. Claude Haiku is used to keep costs minimal (~$0.001 per word).
     </p>
     <button class="btn-primary" id="save-key-btn" disabled>Start →</button>
   </div>
@@ -408,7 +408,7 @@ body {
 <div id="page-index" class="page">
   <div class="logo">
     <h1>ESL Vocab <em>Selector</em></h1>
-    <p>Gemini AI · new word every time</p>
+    <p>Claude AI · new word every time</p>
   </div>
   <div class="section-label">Starting Letter</div>
   <div class="letter-grid" id="letter-grid"></div>
@@ -434,11 +434,9 @@ body {
   <div class="history-row" id="history-row"></div>
 </div>
 
-<script type="module">
-import { GoogleGenAI } from 'https://esm.run/@google/genai';
-
+<script>
 // ── STATE ──────────────────────────────
-let ai = null;
+let apiKey         = '';
 let selectedLetter = null;
 let selectedLevel  = null;
 let cardState      = 'loading'; // loading | def | word | error
@@ -448,9 +446,9 @@ let errorMsg       = '';
 let sessionHistory = {};
 
 const levelDescriptions = {
-  easy:   'A1-A2 level (very common, concrete, everyday English words)',
-  medium: 'B1 level (intermediate words, moderately common)',
-  hard:   'B1-B2 level (upper-intermediate, more abstract or academic words)'
+  easy:   'A1-A2 CEFR level (very common, concrete, everyday English words)',
+  medium: 'B1 CEFR level (intermediate words, moderately common)',
+  hard:   'B1-B2 CEFR level (upper-intermediate, more abstract or academic words)'
 };
 const levelLabels = { easy: 'Easy', medium: 'Medium', hard: 'Difficult' };
 
@@ -460,38 +458,33 @@ function showPage(id) {
   document.getElementById(id).classList.add('active');
 }
 
-// ── SETUP PAGE ─────────────────────────
+// ── SETUP ──────────────────────────────
 const apiKeyInput = document.getElementById('api-key-input');
 const saveKeyBtn  = document.getElementById('save-key-btn');
 const showKeyChk  = document.getElementById('show-key');
 
-const savedKey = localStorage.getItem('gemini_esl_key') || '';
-if (savedKey) {
-  apiKeyInput.value = savedKey;
+const saved = localStorage.getItem('claude_esl_key') || '';
+if (saved) {
+  apiKey = saved;
+  apiKeyInput.value = saved;
   saveKeyBtn.disabled = false;
-  initAI(savedKey);
   showPage('page-index');
 }
 
 apiKeyInput.addEventListener('input', () => {
-  saveKeyBtn.disabled = apiKeyInput.value.trim().length < 10;
+  saveKeyBtn.disabled = apiKeyInput.value.trim().length < 20;
 });
 showKeyChk.addEventListener('change', () => {
   apiKeyInput.type = showKeyChk.checked ? 'text' : 'password';
 });
 saveKeyBtn.addEventListener('click', () => {
-  const key = apiKeyInput.value.trim();
-  localStorage.setItem('gemini_esl_key', key);
-  initAI(key);
+  apiKey = apiKeyInput.value.trim();
+  localStorage.setItem('claude_esl_key', apiKey);
   showPage('page-index');
 });
 document.getElementById('change-key-btn').addEventListener('click', () => {
   showPage('page-setup');
 });
-
-function initAI(key) {
-  ai = new GoogleGenAI({ apiKey: key });
-}
 
 // ── LETTER GRID ────────────────────────
 const grid = document.getElementById('letter-grid');
@@ -533,56 +526,85 @@ function checkReady() {
 document.getElementById('go-btn').addEventListener('click', startWordPage);
 
 function startWordPage() {
-  cardState    = 'loading';
-  currentWord  = null;
-  currentDef   = null;
-  errorMsg     = '';
-
+  cardState   = 'loading';
+  currentWord = null;
+  currentDef  = null;
+  errorMsg    = '';
   document.getElementById('ctx-letter').textContent = selectedLetter;
   document.getElementById('ctx-level').textContent  = levelLabels[selectedLevel];
-
   renderCard();
   showPage('page-word');
   updateHistoryChips();
   fetchWord();
 }
 
-// ── GEMINI CALL ────────────────────────
+// ── CLAUDE API CALL ────────────────────
 async function fetchWord() {
   const hKey    = `${selectedLetter}-${selectedLevel}`;
   const already = sessionHistory[hKey] || [];
   const exclude = already.length
-    ? `Do NOT reuse any of these words already shown: ${already.join(', ')}.`
+    ? `Do NOT reuse any of these words already shown this session: ${already.join(', ')}.`
     : '';
 
   const prompt =
-    `You are an ESL vocabulary teaching assistant for a Quebec secondary school teacher.\n` +
-    `Generate exactly ONE English vocabulary word that:\n` +
-    `- Starts with the letter "${selectedLetter}"\n` +
-    `- Is appropriate for ${levelDescriptions[selectedLevel]}\n` +
-    `- Has a short, clear definition in plain English (one sentence, max 25 words, no jargon)\n` +
+    `You are an ESL vocabulary assistant for a Quebec secondary school teacher.\n` +
+    `Task: pick ONE English vocabulary word and write a definition for it as if it were a dictionary game where the student must guess the word.\n\n` +
+    `Rules:\n` +
+    `- The word must start with the letter "${selectedLetter}"\n` +
+    `- The word must be appropriate for ${levelDescriptions[selectedLevel]}\n` +
+    `- Write the definition in plain English, one sentence, max 25 words\n` +
+    `- The definition must use ___ (three underscores) as a placeholder wherever the word or any direct derivative of it would appear\n` +
+    `- Do NOT include the word, its root, or any conjugation in the definition text\n` +
     `${exclude}\n\n` +
-    `Reply ONLY with minified JSON, no markdown, no explanation:\n` +
-    `{"word":"Example","definition":"A clear definition here."}`;
+    `Example of correct format for the word "Brave":\n` +
+    `{"word":"Brave","definition":"Willing to do something dangerous or difficult without showing fear."}\n\n` +
+    `Example of correct format for the word "Bravery":\n` +
+    `{"word":"Bravery","definition":"The quality of being willing to face danger without showing fear."}\n\n` +
+    `Reply ONLY with minified JSON, no markdown, no extra text:\n` +
+    `{"word":"TheWord","definition":"Definition that never contains TheWord."}`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: prompt,
-      config: { temperature: 0.9, maxOutputTokens: 120 }
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type':         'application/json',
+        'x-api-key':            apiKey,
+        'anthropic-version':    '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model:      'claude-haiku-4-5',
+        max_tokens: 120,
+        messages:   [{ role: 'user', content: prompt }]
+      })
     });
 
-    const raw     = response.text.trim();
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data    = await res.json();
+    const raw     = data?.content?.[0]?.text?.trim() || '';
     const cleaned = raw.replace(/```json|```/g, '').trim();
     const parsed  = JSON.parse(cleaned);
 
-    if (!parsed.word || !parsed.definition) throw new Error('Unexpected response format from Gemini.');
+    if (!parsed.word || !parsed.definition) throw new Error('Unexpected response format.');
     if (!parsed.word.toUpperCase().startsWith(selectedLetter)) {
-      throw new Error(`Gemini returned "${parsed.word}" — wrong starting letter. Tap retry.`);
+      throw new Error(`Got "${parsed.word}" — wrong starting letter. Tap retry.`);
     }
 
     currentWord = parsed.word;
-    currentDef  = parsed.definition;
+
+    // Safety net: remove the word and common derivatives from the definition
+    let safeDef = parsed.definition;
+    // Build a root (strip common suffixes) for broader matching
+    const root = parsed.word.toLowerCase()
+      .replace(/(tion|sion|ness|ment|ing|ed|er|est|ly|ful|less|ive|ous|al|ic)$/i, '')
+      .slice(0, Math.max(4, parsed.word.length - 3)); // at least 4 chars
+    const scrubRegex = new RegExp(`\\b${root}\\w*`, 'gi');
+    safeDef = safeDef.replace(scrubRegex, '___');
+    currentDef  = safeDef;
     cardState   = 'def';
 
     if (!sessionHistory[hKey]) sessionHistory[hKey] = [];
@@ -625,11 +647,11 @@ function renderCard() {
     return;
   }
 
-  const pill  = `<div class="level-pill ${selectedLevel}">${levelLabels[selectedLevel]}</div>`;
-  const def   = `<div class="def-text">${esc(currentDef)}</div>`;
-  const word  = cardState === 'word'
+  const pill = `<div class="level-pill ${selectedLevel}">${levelLabels[selectedLevel]}</div>`;
+  const def  = `<div class="def-text">${esc(currentDef)}</div>`;
+  const word = cardState === 'word'
     ? `<div class="word-reveal">${esc(currentWord)}</div>` : '';
-  const hint  = cardState === 'def'
+  const hint = cardState === 'def'
     ? '<div class="tap-hint">Tap to reveal the word</div>'
     : '<div class="tap-hint">Tap to go back</div>';
 
@@ -638,7 +660,7 @@ function renderCard() {
 }
 
 card.addEventListener('click', () => {
-  if (cardState === 'def')  { cardState = 'word'; renderCard(); }
+  if      (cardState === 'def')  { cardState = 'word'; renderCard(); }
   else if (cardState === 'word') { showPage('page-index'); }
 });
 
@@ -653,8 +675,8 @@ function updateHistoryChips() {
 }
 
 // ── UTIL ───────────────────────────────
-function esc(str) {
-  return String(str)
+function esc(s) {
+  return String(s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 </script>
